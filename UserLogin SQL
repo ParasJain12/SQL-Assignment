@@ -1,0 +1,23 @@
+1. Find Assigned Permission for given security group
+
+select sg.groupId, sg.description as GroupName,
+       sp.permissionId, sp.description as permissionName
+from SecurityGroup sg 
+JOIN SecurityGroupPermission sgp on sg.groupId = sgp.groupId
+JOIN SecurityPermission sp on sgp.permissionId = sp.permissionId
+where sg.groupId = 'SG1';
+
+2. Find Assigned Roles for given user
+select ul.userLoginId, sg.groupId, sg.description AS GroupName
+from UserLogin ul
+JOIN UserLoginSecurityGroup ulsg on ul.userLoginId = ulsg.userLoginId
+JOIN SecurityGroup sg ON ulsg.groupId = sg.groupId
+where ul.userLoginId = 'U1';
+
+3. Check if user has permission to access product
+select DISTINCT ul.userLoginId, sp.permissionId, sp.description AS permissionName
+from UserLogin ul 
+JOIN UserLoginSecurityGroup ulsg on ul.userLoginId = ulsg.userLoginId
+JOIN SecurityGroupPermission sgp ON ulsg.groupId = spg.groupId
+JOIN SecurityPermission sp on sgp.permissionId = sp.permissionId
+where ul.userLoginId = 'U1' and sp.permissionId = 'P2';
