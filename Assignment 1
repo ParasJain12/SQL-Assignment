@@ -27,3 +27,65 @@ FROM PRODUCT p
 JOIN PRODUCT_TYPE pt on p.product_type_id = pt.product_type_id
 JOIN GOOD_IDENTIFICATION gi on p.product_id = gi.product_id 
 where good_identification_type_id = 'ERP_ID' AND gi.id_value IS NULL;
+
+5. Completed Orders in August 2023
+Solution: select oh.order_id,
+	   oh.status_id AS Order_Status,
+       oi.status_id AS OrderItem_Status,
+       p.internal_name,
+       p.product_type_id,
+       f.facility_id,
+       oh.external_id,
+       oi.product_id,
+       oh.product_store_id,
+       oi.quantity as TOTAL_QUANTITY,
+       f.facility_type_id,
+       ohi.order_history_id,
+       oi.order_id,
+       oi.order_item_seq_id,
+       oisg.ship_group_seq_id,
+       oisg.facility_id
+from order_header oh
+join order_item oi on oi.order_id = oh.order_id
+join order_status os on os.order_id = oh.order_id and oh.STATUS_ID = 'order_completed' and os.STATUS_ID = 'order_completed'
+join product p on p.product_id = oi.product_id
+join order_item_ship_group oisg on oi.order_id = oisg.order_id and oi.SHIP_GROUP_SEQ_ID = oisg.SHIP_GROUP_SEQ_ID
+join facility f on f.facility_id = oisg.facility_id
+join order_history ohi on oh.order_id = ohi.order_id and oi.ORDER_ITEM_SEQ_ID = ohi.ORDER_ITEM_SEQ_ID
+where os.status_datetime BETWEEN '2023-08-01' and '2023-08-30';
+
+6. Newly Created Sales Orders and Payment Methods
+Solution: select oh.order_id,
+       oh.grand_total AS Total_Amount,
+       opp.payment_method_type_id AS Payment_Method,
+       oi.external_id AS Shopify_Order_Id
+from Order_Header oh
+join order_payment_preference opp on oh.order_id = opp.order_id
+join order_item oi on oh.order_id = oi.order_id
+where oh.status_id = 'order_created' and oh.order_type_id='sales_order';
+
+7. Payment Captured but Not Shipped
+Solution: select oh.order_id, 
+          oh.status_id AS Order_Status,
+	   opp.status_id AS Payment_Status,
+          s.status_id AS Shipment_Status
+from Order_Payment_Preference opp 
+JOIN order_header oh on opp.order_id = oh.order_id
+JOIN shipment s on s.primary_order_id = opp.order_id
+where s.status_id != 'SHIPMENT_SHIPPED' AND opp.status_id = 'PAYMENT_SETTLED';
+
+8. Orders Completed Hourly
+select count(order_id) as total_order,
+       hour(Status_Datetime) as hr
+from Order_Status os 
+where status_id = 'Order_Completed' group by hr;
+
+9. BOPIS Orders Revenue (Last Year)
+Solution: select count(oh.order_id) as total_order, 
+       sum(oh.grand_total) as total_Revenue
+from order_item_ship_group oisg 
+JOIN order_header oh on oisg.order_id = oh.order_id
+where oisg.shipment_method_type_id = 'STOREPICKUP'
+and oh.order_date >= curdate() - INTERVAL 1 YEAR;
+
+10. 
