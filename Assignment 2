@@ -50,4 +50,68 @@ where pa.state_province_geo_id = 'NY'
 group by p.product_id;
 
 4. Store-Specific (Facility-Wise) Revenue
+Solution: select f.facility_id, 
+	   f.facility_name,
+	   count(oi.order_id) as Total_Orders, 
+           sum(oi.UNIT_PRICE) as Total_Revenue,
+           CONCAT(MIN(DATE(oh.ORDER_DATE)), ' to ', MAX(DATE(oh.ORDER_DATE))) AS Date_Range
+from order_item oi
+join order_header oh on oh.ORDER_ID = oi.ORDER_ID 
+join order_shipment os on os.order_id = oi.order_id
+join shipment s on s.SHIPMENT_ID = os.SHIPMENT_ID 
+join facility f on f.FACILITY_ID = s.ORIGIN_FACILITY_ID 
+group by f.FACILITY_ID
+order by total_revenue desc;
+
+5.  Inventory Management & Transfers
+    Lost and Damaged Inventory
 Solution: 
+
+6. Low Stock or Out of Stock Items Report
+Solution: select p.product_id,
+	   p.product_name,
+       ii.facility_id,
+       ii.quantity_on_hand_total as QOH,
+       ii.available_to_promise_total as ATP,
+       pf.reorder_quantity as Reorder_Threshold,
+       pf.last_updated_stamp as Date_Checked
+from product p
+JOIN Inventory_Item ii on ii.product_id = p.product_id
+JOIN Product_facility pf on pf.product_id = p.product_id;
+
+7. Retrieve the Current Facility (Physical or Virtual) of Open Orders
+Solution: select oh.order_id,
+	   oh.status_id AS order_status,
+       ii.facility_id,
+       f.facility_name,
+       f.facility_type_id
+from Order_Header oh
+JOIN inventory_item_detail iid on iid.order_id = oh.order_id
+JOIN inventory_item ii on ii.inventory_item_id = iid.inventory_item_id
+JOIN Facility f on f.facility_id = ii.facility_id
+where oh.status_Id = 'ORDER_APPROVED';
+
+8. Items Where QOH and ATP Differ
+Solution: select p.product_id,
+       ii.facility_id,
+       ii.quantity_on_hand_total,
+       ii.available_to_promise_total,
+       (ii.quantity_on_hand_total - ii.available_to_promise_total) as Difference
+from product p 
+JOIN Inventory_Item ii on ii.product_id = p.product_id;
+
+9. Order Item Current Status Changed Date-Time
+Solution: select oi.order_id, 
+       oi.order_item_seq_id,
+       oi.status_id as current_status_id,
+       oi.last_updated_stamp as status_change_datetime,
+       oi.change_by_user_login_id as changed_by
+from order_item oi;
+
+10. Total Orders by Sales Channel
+Solution: select oh.sales_channel_enum_id,
+       count(oh.order_id) as total_orders,
+       sum(oh.grand_total) as total_revenue,
+       concat(MIN(DATE(oh.ORDER_DATE)), ' to ', MAX(DATE(oh.ORDER_DATE))) as reporting_period
+from order_header oh
+group by oh.sales_channel_enum_id;
