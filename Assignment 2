@@ -1,0 +1,53 @@
+1. Shipping Addresses for October 2023 Orders
+Solution: select oh.order_id, 
+		    oh.status_id as order_status, 
+        oh.order_date, 
+        or2.PARTY_ID as Customer_Id,  
+        p.FIRST_NAME || ' ' || p.LAST_NAME as customer_name ,
+        pa.house_number_ext as street_address,
+        pa.city,
+        pa.state_province_geo_id as state_province,
+        pa.postal_code,
+        pa.country_geo_id as country_code
+from order_header oh
+join order_role or2 on or2.ORDER_ID = oh.ORDER_ID and or2.ROLE_TYPE_ID like "%customer"
+join person p on p.PARTY_ID = or2.PARTY_ID 
+join order_contact_mech ocm on ocm.ORDER_ID = oh.ORDER_ID
+join contact_mech cm on cm.CONTACT_MECH_ID = ocm.CONTACT_MECH_ID and ocm.CONTACT_MECH_PURPOSE_TYPE_ID = 'SHIPPING_LOCATION'
+join postal_address pa on pa.CONTACT_MECH_ID = cm.CONTACT_MECH_ID 
+where ((oh.ORDER_DATE between '2023-10-01' and '2023-10-31') and (oh.STATUS_ID = 'ORDER_CREATED'))
+or (oh.STATUS_ID = 'ORDER_COMPLETED' and oh.ENTRY_DATE between '2023-10-01' and '2023-10-31');
+
+2. Orders from New York
+Solutions: select oh.order_id,
+	     pe.first_name || ' ' || pe.last_name  AS Customer_Name,
+       pa.house_number_ext AS street_address,
+       pa.city,
+       pa.state_province_geo_id AS state_province,
+       pa.postal_code,
+       oh.grand_total as total_amount,
+       oh.order_date,
+       oh.status_id as Order_status
+from Order_Header oh
+JOIN ORDER_ROLE orr on oh.order_id = orr.order_id
+JOIN Person pe on pe.party_id = orr.party_id
+JOIN order_contact_mech ocm ON oh.order_id = ocm.order_id
+JOIN contact_mech cm ON ocm.contact_mech_id = cm.contact_mech_id
+JOIN postal_address pa ON cm.contact_mech_id = pa.contact_mech_id
+WHERE pa.state_province_geo_id = 'NY';
+
+3. Top-Selling Product in New York
+Solution: select p.product_Id,
+	     p.internal_name,
+       sum(oi.quantity) as Total_Quantity_Sold,
+       sum(oh.grand_total) as Total_Revenue
+from Order_Item oi 
+JOIN Product p on p.product_id = oi.product_id
+JOIN Order_Header oh on oh.order_id = oi.order_id
+JOIN Order_contact_mech ocm on ocm.order_id = oh.order_id and ocm.contact_mech_purpose_type_id like '%location'
+JOIN postal_address pa on pa.contact_mech_id = ocm.contact_mech_id
+where pa.state_province_geo_id = 'NY'
+group by p.product_id;
+
+4. Store-Specific (Facility-Wise) Revenue
+Solution: 
