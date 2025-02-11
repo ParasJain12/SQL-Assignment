@@ -28,6 +28,14 @@ JOIN PRODUCT_TYPE pt on p.product_type_id = pt.product_type_id
 JOIN GOOD_IDENTIFICATION gi on p.product_id = gi.product_id 
 where good_identification_type_id = 'ERP_ID' AND gi.id_value IS NULL;
 
+4. Product IDs Across Systems
+Solution: select gi.product_id,
+	  gi.good_identification_type_id,
+          gi.id_value
+from good_identification gi 
+where gi.good_identification_type_id = 'ERP_ID' or gi.good_identification_type_id = 'SHOPIFY_PROD_ID' or gi.good_identification_type_id = 'SHOPIFY_PROD_SKU';
+
+
 5. Completed Orders in August 2023
 Solution: select oh.order_id,
 	   oh.status_id AS Order_Status,
@@ -88,4 +96,18 @@ JOIN order_header oh on oisg.order_id = oh.order_id
 where oisg.shipment_method_type_id = 'STOREPICKUP'
 and oh.order_date >= curdate() - INTERVAL 1 YEAR;
 
-10. 
+10. Canceled Orders (Last Month)
+Solution: select count(os.order_id) as total_order,
+	  os.change_reason as cancellation_reason
+from order_status os 
+where os.STATUS_ID = 'ORDER_CANCELLED' 
+AND os.status_datetime >= DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m-01')
+AND os.status_datetime < DATE_FORMAT(CURDATE(), '%Y-%m-01')
+group by os.CHANGE_REASON;
+
+11. Product Threshold Value
+Solution: select pf.PRODUCT_ID ,pf.FACILITY_ID ,pf.MINIMUM_STOCK as THRESHOLD
+from product_facility pf 
+join facility f 
+on f.facility_id=pf.FACILITY_ID
+where f.FACILITY_TYPE_ID = 'CONFIGURATION' and pf.MINIMUM_STOCK is not null order by THRESHOLD DESC;
