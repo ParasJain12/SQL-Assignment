@@ -20,5 +20,5 @@ JOIN Product p on p.product_id = oi.product_id
 JOIN Order_Header oh on oh.order_id = oi.order_id
 JOIN Order_contact_mech ocm on ocm.order_id = oh.order_id and ocm.contact_mech_purpose_type_id like '%location'
 JOIN postal_address pa on pa.contact_mech_id = ocm.contact_mech_id
-where pa.state_province_geo_id = 'NY'
+where pa.state_province_geo_id = 'NY' AND  oi.status_id = 'ITEM_COMPLETED'
 group by p.product_id;
