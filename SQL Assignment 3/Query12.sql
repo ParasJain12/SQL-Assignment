@@ -11,4 +11,12 @@
 -- DURATION (How long has the order been assigned at the facility)
 
 Solution:-
-
+select oh.order_id,
+       oh.order_date,
+       oisg.facility_id,
+       oh.status_id
+       datediff(DATE(oh.entry_date),DATE(oh.entry_date)) as Duration
+from Order_Header oh
+JOIN Order_Item_Ship_Group oisg on oh.order_id = oisg.order_id
+JOIN Picklist pi on pi.facility_id = oisg.facility_id
+where pi.status_id is null; 
